@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { getAuthRedirectUrl } from '@/lib/authRedirect';
 import { supabase } from '@/lib/supabase';
 
 function formatAuthError(message: string) {
@@ -78,9 +79,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: name?.trim()
-          ? { data: { full_name: name.trim() } }
-          : undefined,
+        options: {
+          emailRedirectTo: getAuthRedirectUrl(),
+          ...(name?.trim() ? { data: { full_name: name.trim() } } : {}),
+        },
       });
       if (error) return { error: formatAuthError(error.message) };
       if (data.session) {

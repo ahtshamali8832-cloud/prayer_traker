@@ -18,8 +18,10 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const routeSegments = segments as string[];
+    const isAuthCallback = routeSegments[0] === 'auth' && routeSegments[1] === 'callback';
 
-    if (!session && !inAuthGroup) {
+    if (!session && !inAuthGroup && !isAuthCallback) {
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
       router.replace('/(tabs)/dashboard');
@@ -39,6 +41,7 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="auth/callback" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="+not-found" />
       </Stack>
