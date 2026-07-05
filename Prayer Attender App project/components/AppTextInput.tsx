@@ -8,8 +8,10 @@ import {
   Platform,
   StyleProp,
   ViewStyle,
+  TouchableOpacity,
 } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useTheme } from '@/lib/themeContext';
 
 interface AppTextInputProps extends TextInputProps {
@@ -26,10 +28,13 @@ export function AppTextInput({
   onFocus,
   onBlur,
   placeholderTextColor,
+  secureTextEntry,
   ...props
 }: AppTextInputProps) {
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const isPasswordField = secureTextEntry === true;
 
   return (
     <View style={[styles.field, containerStyle]}>
@@ -40,6 +45,7 @@ export function AppTextInput({
       <View
         style={[
           styles.inputWrap,
+          isPasswordField && styles.inputWrapRow,
           {
             backgroundColor: colors.card,
             borderColor: focused ? colors.primary : colors.border,
@@ -47,7 +53,13 @@ export function AppTextInput({
         ]}>
         <TextInput
           {...props}
-          style={[styles.input, { color: colors.text }, style]}
+          secureTextEntry={isPasswordField && !passwordVisible}
+          style={[
+            styles.input,
+            isPasswordField && styles.inputWithToggle,
+            { color: colors.text },
+            style,
+          ]}
           placeholderTextColor={placeholderTextColor ?? colors.textMuted}
           underlineColorAndroid="transparent"
           onFocus={(event) => {
@@ -59,6 +71,20 @@ export function AppTextInput({
             onBlur?.(event);
           }}
         />
+        {isPasswordField ? (
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setPasswordVisible((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={passwordVisible ? 'Hide password' : 'Show password'}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            {passwordVisible ? (
+              <EyeOff size={20} color={colors.textMuted} />
+            ) : (
+              <Eye size={20} color={colors.textMuted} />
+            )}
+          </TouchableOpacity>
+        ) : null}
       </View>
     </View>
   );
@@ -137,6 +163,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: Platform.OS === 'web' ? 12 : 14,
+  },
+  inputWrapRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputWithToggle: {
+    flex: 1,
+  },
+  eyeButton: {
+    paddingLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   input: {
     fontSize: 16,

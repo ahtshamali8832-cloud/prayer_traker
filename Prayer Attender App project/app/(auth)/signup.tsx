@@ -14,8 +14,6 @@ import { Link, useRouter } from 'expo-router';
 import { useTheme } from '@/lib/themeContext';
 import { useAuth } from '@/lib/authContext';
 import { showAlert } from '@/lib/alert';
-import { supabase } from '@/lib/supabase';
-import { syncLocationOnLogin } from '@/lib/location';
 import { AppTextInput } from '@/components/AppTextInput';
 import { Mail, Lock, User, UserPlus, Moon } from 'lucide-react-native';
 
@@ -70,14 +68,6 @@ export default function SignupScreen() {
     }
 
     if (message === 'Welcome! Your account is ready.') {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setStatusMessage('Detecting your location...');
-        const result = await syncLocationOnLogin(user.id);
-        if (result.ok && result.location) {
-          setStatusMessage(`${result.location.city}, ${result.location.country}`);
-        }
-      }
       setLoading(false);
       router.replace('/(tabs)/dashboard');
       return;

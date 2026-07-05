@@ -14,8 +14,6 @@ import { Link, useRouter } from 'expo-router';
 import { useTheme } from '@/lib/themeContext';
 import { useAuth } from '@/lib/authContext';
 import { showAlert } from '@/lib/alert';
-import { supabase } from '@/lib/supabase';
-import { syncLocationOnLogin } from '@/lib/location';
 import { AppTextInput } from '@/components/AppTextInput';
 import { Mail, Lock, LogIn, Moon } from 'lucide-react-native';
 
@@ -26,7 +24,6 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async () => {
@@ -36,35 +33,16 @@ export default function LoginScreen() {
     }
 
     setErrorMessage('');
-    setStatusMessage('');
     setLoading(true);
     const { error } = await signIn(email.trim(), password);
+    setLoading(false);
 
     if (error) {
-      setLoading(false);
       setErrorMessage(error);
       showAlert('Login Failed', error, 'error');
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setStatusMessage('Detecting your location...');
-      const result = await syncLocationOnLogin(user.id);
-      if (result.ok && result.location) {
-        setStatusMessage(`${result.location.city}, ${result.location.country}`);
-        setLoading(false);
-        showAlert(
-          'Welcome back',
-          `Signed in from ${result.location.city}, ${result.location.country}.`,
-          'success'
-        );
-        router.replace('/(tabs)/dashboard');
-        return;
-      }
-    }
-
-    setLoading(false);
     showAlert('Welcome back', 'Signed in successfully.', 'success');
     router.replace('/(tabs)/dashboard');
   };
@@ -107,12 +85,6 @@ export default function LoginScreen() {
             secureTextEntry
             autoComplete="password"
           />
-
-          {statusMessage ? (
-            <View style={styles.infoBox}>
-              <Text style={styles.infoText}>{statusMessage}</Text>
-            </View>
-          ) : null}
 
           {errorMessage ? (
             <View style={styles.errorBox}>

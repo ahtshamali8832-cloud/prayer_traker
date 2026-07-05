@@ -5,12 +5,14 @@ import * as Linking from 'expo-linking';
 export function getAuthRedirectUrl(): string {
   const configured = process.env.EXPO_PUBLIC_APP_URL?.replace(/\/$/, '');
 
-  if (configured) {
-    return `${configured}/auth/callback`;
+  // Lightweight static page — loads in seconds on mobile (full Expo bundle is very heavy).
+  if (Platform.OS === 'web') {
+    const origin = configured ?? (typeof window !== 'undefined' ? window.location.origin : '');
+    if (origin) return `${origin}/auth-callback.html`;
   }
 
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    return `${window.location.origin}/auth/callback`;
+  if (configured) {
+    return `${configured}/auth-callback.html`;
   }
 
   return Linking.createURL('/auth/callback');

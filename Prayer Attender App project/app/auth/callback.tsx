@@ -5,10 +5,27 @@ import { useAuth } from '@/lib/authContext';
 import { useTheme } from '@/lib/themeContext';
 import { supabase } from '@/lib/supabase';
 
-function clearAuthHashFromUrl() {
+function clearAuthParamsFromUrl() {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     window.history.replaceState({}, document.title, window.location.pathname);
   }
+}
+
+async function resolveSessionFromUrl() {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    return supabase.auth.getSession();
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+
+  if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) throw error;
+    return { data: { session: data.session }, error: null };
+  }
+
+  return supabase.auth.getSession();
 }
 
 export default function AuthCallbackScreen() {
@@ -16,42 +33,49 @@ export default function AuthCallbackScreen() {
   const { session, loading } = useAuth();
   const { colors } = useTheme();
   const [message, setMessage] = useState('Verifying your email...');
+  const [handled, setHandled] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || handled) return;
 
     if (session) {
-      clearAuthHashFromUrl();
-      setMessage('Email verified! Redirecting...');
+      setHandled(true);
+      clearAuthParamsFromUrl();
       router.replace('/(tabs)/dashboard');
       return;
     }
 
     let cancelled = false;
 
-    const verifyFromUrl = async () => {
-      const { data: { session: freshSession } } = await supabase.auth.getSession();
+    const verify = async () => {
+      try {
+        const { data: { session: freshSession } } = await resolveSessionFromUrl();
+        if (cancelled) return;
 
-      if (cancelled) return;
+        setHandled(true);
+        clearAuthParamsFromUrl();
 
-      if (freshSession) {
-        clearAuthHashFromUrl();
-        setMessage('Email verified! Redirecting...');
-        router.replace('/(tabs)/dashboard');
-        return;
+        if (freshSession) {
+          setMessage('Email verified! Redirecting...');
+          router.replace('/(tabs)/dashboard');
+          return;
+        }
+
+        setMessage('Email verified. Please sign in.');
+        router.replace('/(auth)/login');
+      } catch {
+        if (cancelled) return;
+        setHandled(true);
+        setMessage('Verification failed. Please sign in.');
+        router.replace('/(auth)/login');
       }
-
-      setMessage('Email verified. Please sign in with your account.');
-      clearAuthHashFromUrl();
-      router.replace('/(auth)/login');
     };
 
-    const timer = setTimeout(verifyFromUrl, 800);
+    verify();
     return () => {
       cancelled = true;
-      clearTimeout(timer);
     };
-  }, [session, loading, router]);
+  }, [session, loading, handled, router]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
