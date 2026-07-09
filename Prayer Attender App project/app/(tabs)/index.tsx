@@ -10,15 +10,8 @@ import {
 import { useFocusEffect } from 'expo-router';
 import { useTheme } from '@/lib/themeContext';
 import { useAuth } from '@/lib/authContext';
-import {
-  getPrayerTimes,
-  DailyPrayerTimes,
-  PrayerTime,
-  getNextPrayer,
-  getActivePrayer,
-  getTimeUntilPrayer,
-  PRAYER_NAMES,
-} from '@/lib/prayerTimes';
+import { getPrayerTimes, DailyPrayerTimes, PrayerTime, getNextPrayer, getActivePrayer, getTimeUntilPrayer, PRAYER_NAMES } from '@/lib/prayerTimes';
+import { getHijriDate } from '@/lib/hijri';
 import { supabase } from '@/lib/supabase';
 import { togglePrayerAttendance, toDateString, isToday, parseDateString, canMarkPrayerAttendance, onAttendanceUpdated } from '@/lib/attendance';
 import { getPrayerCalcFromSettings, loadUserPrayerSettings, maybeSyncLocationInBackground, onLocationUpdated } from '@/lib/location';
@@ -73,6 +66,14 @@ export default function HomeScreen() {
   const viewingToday = isToday(selectedDate);
   const activePrayer =
     viewingToday && prayerTimes ? getActivePrayer(prayerTimes, currentTime) : null;
+  const displayedHijriDate =
+    prayerTimes && settings
+      ? getHijriDate(parseDateString(selectedDate), {
+          calculationMethod: settings.calculation_method,
+          now: currentTime,
+          maghribTime: viewingToday ? prayerTimes.maghrib.time : undefined,
+        })
+      : prayerTimes?.hijriDate ?? '';
 
   // Current time ticker
   useEffect(() => {
@@ -334,12 +335,12 @@ export default function HomeScreen() {
         </View>
 
         {/* Hijri Date */}
-        {prayerTimes?.hijriDate && (
+        {displayedHijriDate ? (
           <View style={styles.hijriBadge}>
             <Moon size={16} color={colors.islamicGold} />
-            <Text style={styles.hijriText}>{prayerTimes.hijriDate}</Text>
+            <Text style={styles.hijriText}>{displayedHijriDate}</Text>
           </View>
-        )}
+        ) : null}
 
         {/* Next Prayer Card (only when no prayer is active) */}
         {viewingToday && !activePrayer && nextPrayer ? (

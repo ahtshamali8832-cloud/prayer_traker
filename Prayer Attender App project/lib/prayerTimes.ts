@@ -1,6 +1,8 @@
 // Prayer time calculation using simplified algorithms
 // Based on standard Islamic prayer time formulas
 
+import { getHijriDate, isSameGregorianDay } from '@/lib/hijri';
+
 export interface PrayerTime {
   name: string;
   label: string;
@@ -281,22 +283,12 @@ export function getPrayerTimes(
     },
     date: dateStr,
     day: dayName,
-    hijriDate: getHijriDate(date),
+    hijriDate: getHijriDate(date, {
+      calculationMethod: method,
+      now: new Date(),
+      maghribTime: isSameGregorianDay(date, new Date()) ? times.maghrib : undefined,
+    }),
   };
-}
-
-export function getHijriDate(date: Date = new Date()): string {
-  try {
-    const d = new Date(date);
-    const hijriDate = d.toLocaleDateString('en-US-u-ca-islamic', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-    return hijriDate;
-  } catch {
-    return '';
-  }
 }
 
 export function isFriday(date: Date = new Date()): boolean {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -17,11 +18,12 @@ import {
   LayoutDashboard,
   List,
   Menu,
-  Moon,
   Settings,
   X,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/themeContext';
+
+const appLogo = require('@/assets/images/icon.png');
 
 const SIDEBAR_WIDTH = 272;
 const MOBILE_BREAKPOINT = 768;
@@ -77,11 +79,11 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const sidebar = (
     <View style={[styles.sidebarInner, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={[styles.sidebarHeader, { borderBottomColor: colors.border }]}>
-        <View style={[styles.logoCircle, { backgroundColor: colors.primaryLight }]}>
-          <Moon size={22} color={colors.primary} />
+        <View style={styles.logoCircle}>
+          <Image source={appLogo} style={styles.logoImage} resizeMode="contain" />
         </View>
         <View style={styles.brandText}>
-          <Text style={[styles.brandTitle, { color: colors.text }]}>Prayer Tracker</Text>
+          <Text style={[styles.brandTitle, { color: colors.text }]}>Prayer Traker</Text>
           <Text style={[styles.brandSubtitle, { color: colors.textMuted }]}>Daily salah log</Text>
         </View>
         {isMobile ? (
@@ -161,11 +163,11 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
               <Menu size={22} color={colors.text} />
             </TouchableOpacity>
             <View style={styles.mobileHeaderText}>
-              <Text style={[styles.appName, { color: colors.text }]}>Prayer Tracker</Text>
+              <Text style={[styles.appName, { color: colors.text }]}>Prayer Traker</Text>
               <Text style={[styles.pageName, { color: colors.textMuted }]}>{activeItem.label}</Text>
             </View>
-            <View style={[styles.headerLogo, { backgroundColor: colors.primaryLight }]}>
-              <Moon size={18} color={colors.primary} />
+            <View style={styles.headerLogo}>
+              <Image source={appLogo} style={styles.headerLogoImage} resizeMode="contain" />
             </View>
           </View>
         ) : null}
@@ -213,11 +215,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   logoCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 34,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logoImage: {
+    width: 48,
+    height: 34,
+    transform: [{ scaleX: 1.18 }, { scaleY: 0.9 }],
   },
   brandText: {
     flex: 1,
@@ -285,11 +291,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   headerLogo: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  headerLogoImage: {
+    width: 40,
+    height: 28,
+    transform: [{ scaleX: 1.15 }, { scaleY: 0.9 }],
   },
   content: {
     flex: 1,

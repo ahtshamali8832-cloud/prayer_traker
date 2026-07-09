@@ -1,5 +1,8 @@
 import { supabase } from '@/lib/supabase';
+import { formatHijriDate } from '@/lib/hijri';
 import { PRAYER_NAMES, type DailyPrayerTimes } from '@/lib/prayerTimes';
+
+export { formatHijriDate } from '@/lib/hijri';
 
 export type AttendanceRow = {
   prayer_name: string;
@@ -70,12 +73,6 @@ export function parseDateString(dateStr: string) {
   return new Date(year, month - 1, day);
 }
 
-export function formatHijriDate(date: Date) {
-  return new Intl.DateTimeFormat('en-u-ca-islamic', {
-    day: 'numeric',
-    month: 'short',
-  }).format(date);
-}
 
 export function isToday(dateStr: string) {
   return dateStr === toDateString(new Date());

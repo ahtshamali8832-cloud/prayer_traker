@@ -35,6 +35,10 @@ function emitLocationUpdated() {
   locationListeners.forEach((listener) => listener());
 }
 
+export function notifyPrayerSettingsUpdated() {
+  emitLocationUpdated();
+}
+
 function isInFaisalabadRegion(lat: number, lon: number): boolean {
   return lat >= 30.95 && lat <= 31.85 && lon >= 72.55 && lon <= 73.65;
 }

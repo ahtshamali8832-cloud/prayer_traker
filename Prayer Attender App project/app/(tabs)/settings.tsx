@@ -14,7 +14,7 @@ import { showAlert, showConfirmAlert } from '@/lib/alert';
 import { AppTextInput } from '@/components/AppTextInput';
 import { supabase } from '@/lib/supabase';
 import { getPrayerTimes, CALCULATION_METHODS } from '@/lib/prayerTimes';
-import { loadUserPrayerSettings, syncLocationOnLogin, onLocationUpdated } from '@/lib/location';
+import { loadUserPrayerSettings, syncLocationOnLogin, onLocationUpdated, notifyPrayerSettingsUpdated } from '@/lib/location';
 import {
   Moon,
   Sun,
@@ -132,6 +132,7 @@ export default function SettingsScreen() {
       }
 
       setSaved(true);
+      notifyPrayerSettingsUpdated();
       showAlert('Settings Saved', 'Your prayer preferences were updated.', 'success');
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {

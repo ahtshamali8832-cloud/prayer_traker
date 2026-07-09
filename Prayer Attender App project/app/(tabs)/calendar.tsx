@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +8,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '@/lib/themeContext';
+import { useAuth } from '@/lib/authContext';
+import { getHijriInfo, isSameGregorianDay } from '@/lib/hijri';
+import { getPrayerTimes } from '@/lib/prayerTimes';
+import { getPrayerCalcFromSettings, loadUserPrayerSettings, onLocationUpdated } from '@/lib/location';
 import {
   ChevronLeft,
   ChevronRight,
@@ -26,21 +31,6 @@ interface DayInfo {
   gregorianDate: Date;
 }
 
-const HIJRI_MONTHS = [
-  'Muharram',
-  'Safar',
-  'Rabi al-Awwal',
-  'Rabi al-Thani',
-  'Jumada al-Awwal',
-  'Jumada al-Thani',
-  'Rajab',
-  'Shaban',
-  'Ramadan',
-  'Shawwal',
-  'Dhu al-Qadah',
-  'Dhu al-Hijjah',
-];
-
 const GREGORIAN_MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -50,13 +40,84 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function CalendarScreen() {
   const { colors } = useTheme();
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [days, setDays] = useState<DayInfo[]>([]);
+  const [calculationMethod, setCalculationMethod] = useState('Karachi');
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    if (!user) return;
+    loadUserPrayerSettings(user.id).then((settings) => {
+      if (settings?.calculation_method) {
+        setCalculationMethod(settings.calculation_method);
+      }
+    });
+  }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) return;
+      loadUserPrayerSettings(user.id).then((settings) => {
+        if (settings?.calculation_method) {
+          setCalculationMethod(settings.calculation_method);
+        }
+      });
+    }, [user])
+  );
+
+  useEffect(() => {
+    const unsubscribe = onLocationUpdated(() => {
+      if (!user) return;
+      loadUserPrayerSettings(user.id).then((settings) => {
+        if (settings?.calculation_method) {
+          setCalculationMethod(settings.calculation_method);
+        }
+      });
+    });
+    return unsubscribe;
+  }, [user]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const todayMaghrib = useMemo(() => {
+    if (!user) return undefined;
+    const calc = getPrayerCalcFromSettings({
+      calculation_method: calculationMethod,
+    });
+    const times = getPrayerTimes(
+      new Date(),
+      calc.latitude,
+      calc.longitude,
+      calc.method,
+      calc.timezoneOffsetHours
+    );
+    return times.maghrib.time;
+  }, [user, calculationMethod, now.getDate(), now.getMonth(), now.getFullYear()]);
+
+  const hijriOptions = useMemo(
+    () => ({
+      calculationMethod,
+      now,
+      maghribTime: isSameGregorianDay(selectedDate, now) ? todayMaghrib : undefined,
+    }),
+    [calculationMethod, now, selectedDate, todayMaghrib]
+  );
+
+  const getHijriForDay = (date: Date) =>
+    getHijriInfo(date, {
+      calculationMethod,
+      now,
+      maghribTime: isSameGregorianDay(date, now) ? todayMaghrib : undefined,
+    });
 
   useEffect(() => {
     generateCalendarDays(currentDate);
-  }, [currentDate]);
+  }, [currentDate, calculationMethod, now, todayMaghrib]);
 
   const generateCalendarDays = (date: Date) => {
     const year = date.getFullYear();
@@ -73,7 +134,7 @@ export default function CalendarScreen() {
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startDayOfWeek - 1; i >= 0; i--) {
       const d = new Date(year, month - 1, prevMonthLastDay - i);
-      const hijri = getHijriInfo(d);
+      const hijri = getHijriForDay(d);
       daysArray.push({
         date: prevMonthLastDay - i,
         hijriDay: hijri.day,
@@ -88,7 +149,7 @@ export default function CalendarScreen() {
     // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
       const d = new Date(year, month, i);
-      const hijri = getHijriInfo(d);
+      const hijri = getHijriForDay(d);
       daysArray.push({
         date: i,
         hijriDay: hijri.day,
@@ -104,7 +165,7 @@ export default function CalendarScreen() {
     const remaining = 42 - daysArray.length;
     for (let i = 1; i <= remaining; i++) {
       const d = new Date(year, month + 1, i);
-      const hijri = getHijriInfo(d);
+      const hijri = getHijriForDay(d);
       daysArray.push({
         date: i,
         hijriDay: hijri.day,
@@ -117,36 +178,6 @@ export default function CalendarScreen() {
     }
 
     setDays(daysArray);
-  };
-
-  const getHijriInfo = (date: Date) => {
-    try {
-      const formatter = new Intl.DateTimeFormat('en-u-ca-islamic', {
-        day: 'numeric',
-        month: 'long',
-      });
-      const parts = formatter.formatToParts(date);
-      const day = parseInt(parts.find((p) => p.type === 'day')?.value ?? '1', 10);
-      const monthPart = parts.find((p) => p.type === 'month')?.value ?? 'Muharram';
-
-      let monthIndex = HIJRI_MONTHS.findIndex(
-        (m) => m.toLowerCase() === monthPart.toLowerCase()
-      );
-      if (monthIndex < 0) {
-        monthIndex = HIJRI_MONTHS.findIndex((m) =>
-          monthPart.toLowerCase().includes(m.split(' ')[0].toLowerCase())
-        );
-      }
-      if (monthIndex < 0) monthIndex = 0;
-
-      return {
-        day: Number.isNaN(day) ? 1 : day,
-        month: HIJRI_MONTHS[monthIndex],
-        monthIndex,
-      };
-    } catch {
-      return { day: 1, month: 'Muharram', monthIndex: 0 };
-    }
   };
 
   const isSameDay = (a: Date, b: Date) => {
@@ -169,7 +200,7 @@ export default function CalendarScreen() {
     setSelectedDate(today);
   };
 
-  const selectedHijri = getHijriInfo(selectedDate);
+  const selectedHijri = getHijriInfo(selectedDate, hijriOptions);
   const calendarWeeks: DayInfo[][] = [];
   for (let i = 0; i < days.length; i += 7) {
     calendarWeeks.push(days.slice(i, i + 7));

@@ -156,7 +156,7 @@ export default function HistoryScreen() {
       if (filterType === 'attended' && attendedCount === 0) continue;
       if (filterType === 'missed' && attendedCount === totalCount) continue;
 
-      const hijriDate = formatHijriDate(date);
+      const hijriDate = formatHijriDate(date, { calculationMethod: calc.method });
 
       days.push({
         date: dateStr,

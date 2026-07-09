@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
@@ -15,7 +16,9 @@ import { useTheme } from '@/lib/themeContext';
 import { useAuth } from '@/lib/authContext';
 import { showAlert } from '@/lib/alert';
 import { AppTextInput } from '@/components/AppTextInput';
-import { Mail, Lock, LogIn, Moon } from 'lucide-react-native';
+import { Mail, Lock, LogIn } from 'lucide-react-native';
+
+const appLogo = require('@/assets/images/icon.png');
 
 export default function LoginScreen() {
   const { colors } = useTheme();
@@ -58,10 +61,8 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
           <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Moon size={36} color={colors.primary} />
-            </View>
-            <Text style={styles.title}>Prayer Tracker</Text>
+            <Image source={appLogo} style={styles.logoImage} resizeMode="contain" />
+            <Text style={styles.title}>Prayer Traker</Text>
             <Text style={styles.subtitle}>Sign in to track your prayers</Text>
           </View>
 
@@ -139,14 +140,11 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors']) {
       alignItems: 'center',
       marginBottom: 28,
     },
-    logoCircle: {
+    logoImage: {
       width: 72,
-      height: 72,
-      borderRadius: 36,
-      backgroundColor: colors.primaryLight,
-      justifyContent: 'center',
-      alignItems: 'center',
+      height: 52,
       marginBottom: 16,
+      transform: [{ scaleX: 1.18 }, { scaleY: 0.9 }],
     },
     title: {
       fontSize: 28,

@@ -1,20 +1,27 @@
 {
   "expo": {
-    "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
+    "name": "Prayer Traker",
+    "slug": "prayer-traker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "prayertraker",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "Prayer Traker"
     },
     "plugins": [
       "expo-router",
@@ -23,7 +30,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow Prayer Tracker to use your location for accurate prayer times in your city."
+          "locationWhenInUsePermission": "Allow Prayer Traker to use your location for accurate prayer times in your city."
         }
       ]
     ],
